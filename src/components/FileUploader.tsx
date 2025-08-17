@@ -12,12 +12,72 @@ type FileUploaderProps = {
 };
 
 const parseCsv = (csv: string): string[][] => {
-  const rows = csv.split('\n');
-  return rows.map(row => {
-    // This is a simple CSV parser, it won't handle commas inside quoted strings correctly.
-    // For a more robust solution, a proper CSV parsing library would be needed.
-    return row.split(',');
-  });
+  const rows: string[][] = [];
+  let currentRow: string[] = [];
+  let currentField = '';
+  let inQuotedField = false;
+
+  for (let i = 0; i < csv.length; i++) {
+    const char = csv[i];
+
+    if (inQuotedField) {
+      if (char === '"') {
+        if (i + 1 < csv.length && csv[i + 1] === '"') {
+          // It's an escaped quote
+          currentField += '"';
+          i++; // Skip next quote
+        } else {
+          inQuotedField = false;
+        }
+      } else {
+        currentField += char;
+      }
+    } else {
+      switch (char) {
+        case ',':
+          currentRow.push(currentField);
+          currentField = '';
+          break;
+        case '\n':
+          currentRow.push(currentField);
+          rows.push(currentRow);
+          currentRow = [];
+          currentField = '';
+          // handle CRLF
+          if (i + 1 < csv.length && csv[i + 1] === '\r') {
+            i++;
+          }
+          break;
+        case '\r':
+           // handle CRLF
+          if (i + 1 < csv.length && csv[i + 1] === '\n') {
+            i++;
+          }
+          currentRow.push(currentField);
+          rows.push(currentRow);
+          currentRow = [];
+          currentField = '';
+          break;
+        case '"':
+          if (currentField === '') {
+            inQuotedField = true;
+          } else {
+            currentField += char;
+          }
+          break;
+        default:
+          currentField += char;
+      }
+    }
+  }
+
+  // Add the last field and row if the CSV doesn't end with a newline
+  if (currentField !== '' || currentRow.length > 0) {
+    currentRow.push(currentField);
+    rows.push(currentRow);
+  }
+
+  return rows.filter(row => row.length > 0 && (row.length > 1 || row[0] !== ''));
 };
 
 
