@@ -39,6 +39,9 @@ const prompt = ai.definePrompt({
   Extract the text from the following image and return it as a CSV-formatted string.
   The first line of the CSV should be the header row.
 
+  Pay close attention to numerical data and ensure it is extracted with the highest accuracy.
+  If the rows in the image are prefixed with a serial number or index, create a separate column named "S.No." for these numbers. Do not include the numbers in the adjacent column.
+
 Image: {{media url=imageDataUri}}`,
 });
 
