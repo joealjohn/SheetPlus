@@ -164,8 +164,8 @@ export default function DataTable({ initialData }: DataTableProps) {
   return (
     <TooltipProvider>
     <div className="w-full">
-        <div className="flex justify-between items-center mb-4">
-            <div className="flex gap-2">
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+            <div className="flex gap-2 flex-wrap">
                 <Button onClick={addRow} variant="outline" size="sm">
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Row
                 </Button>
@@ -173,7 +173,7 @@ export default function DataTable({ initialData }: DataTableProps) {
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Column
                 </Button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
                 <Button onClick={exportToWord} variant="default" size="sm">
                     <FileText className="mr-2 h-4 w-4" /> Export Word
                 </Button>
@@ -188,12 +188,12 @@ export default function DataTable({ initialData }: DataTableProps) {
                 <TableRow className="bg-muted/50">
                 <TableHead className="w-12"></TableHead>
                 {headers.map((_, colIndex) => (
-                    <TableHead key={colIndex} className="relative group p-2">
+                    <TableHead key={colIndex} className="relative group p-2 min-w-[150px]">
                         <Input
                             type="text"
                             value={data[0][colIndex]}
                             onChange={(e) => handleCellChange(e, 0, colIndex)}
-                            className="font-bold border-0 bg-transparent min-w-40"
+                            className="font-bold border-0 bg-transparent"
                         />
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -235,12 +235,12 @@ export default function DataTable({ initialData }: DataTableProps) {
                     </Tooltip>
                     </TableCell>
                     {row.map((cell, colIndex) => (
-                    <TableCell key={colIndex} className="p-2">
+                    <TableCell key={colIndex} className="p-2 min-w-[150px]">
                         <Input
                         type="text"
                         value={cell}
                         onChange={(e) => handleCellChange(e, rowIndex + 1, colIndex)}
-                        className="w-full min-w-40"
+                        className="w-full"
                         />
                     </TableCell>
                     ))}
