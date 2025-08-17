@@ -1,6 +1,4 @@
 import Link from 'next/link';
-import { Button } from './ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import SheetLogo from './icons/SheetLogo';
 
 export default function Header() {
@@ -13,10 +11,6 @@ export default function Header() {
             Sheets+
           </span>
         </Link>
-        <div className="flex items-center gap-4">
-          <Button variant="ghost">Sign In</Button>
-          <Button>Sign Up</Button>
-        </div>
       </div>
     </header>
   );

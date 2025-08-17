@@ -48,9 +48,9 @@ export default function Home() {
           <div className="grid gap-8">
             <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
               <CardHeader>
-                <CardTitle className="text-2xl font-headline">Upload Your File</CardTitle>
+                <CardTitle className="text-2xl font-headline">The most powerful AI to extract data from images to sheets</CardTitle>
                 <CardDescription>
-                  Upload an image (JPG, PNG) or a PDF to extract text into a table.
+                  Extract data from your images with up to 90% accuracy, even from handwritten notes. No sign-up required, enjoy free and unlimited usage. Upload an image (JPG, PNG) or a PDF to start.
                 </CardDescription>
               </CardHeader>
               <CardContent>
