@@ -12,71 +12,68 @@ type FileUploaderProps = {
 };
 
 const parseCsv = (csv: string): string[][] => {
+  const lines = csv.split(/\r\n|\n|\r/);
   const rows: string[][] = [];
-  let currentRow: string[] = [];
-  let currentField = '';
+
   let inQuotedField = false;
+  let currentField = '';
+  let currentRow: string[] = [];
 
-  for (let i = 0; i < csv.length; i++) {
-    const char = csv[i];
+  for (const line of lines) {
+    if (line.trim() === '') continue;
 
-    if (inQuotedField) {
-      if (char === '"') {
-        if (i + 1 < csv.length && csv[i + 1] === '"') {
-          // It's an escaped quote
-          currentField += '"';
-          i++; // Skip next quote
+    let i = 0;
+    while (i < line.length) {
+      const char = line[i];
+
+      if (inQuotedField) {
+        if (char === '"') {
+          if (i + 1 < line.length && line[i + 1] === '"') {
+            currentField += '"';
+            i++;
+          } else {
+            inQuotedField = false;
+          }
         } else {
-          inQuotedField = false;
+          currentField += char;
         }
       } else {
-        currentField += char;
-      }
-    } else {
-      switch (char) {
-        case ',':
-          currentRow.push(currentField);
-          currentField = '';
-          break;
-        case '\n':
-          currentRow.push(currentField);
-          rows.push(currentRow);
-          currentRow = [];
-          currentField = '';
-          // handle CRLF
-          if (i + 1 < csv.length && csv[i + 1] === '\r') {
-            i++;
-          }
-          break;
-        case '\r':
-           // handle CRLF
-          if (i + 1 < csv.length && csv[i + 1] === '\n') {
-            i++;
-          }
-          currentRow.push(currentField);
-          rows.push(currentRow);
-          currentRow = [];
-          currentField = '';
-          break;
-        case '"':
-          if (currentField === '') {
-            inQuotedField = true;
-          } else {
+        switch (char) {
+          case ',':
+            currentRow.push(currentField);
+            currentField = '';
+            break;
+          case '"':
+            if (currentField === '') {
+              inQuotedField = true;
+            } else {
+              currentField += char;
+            }
+            break;
+          default:
             currentField += char;
-          }
-          break;
-        default:
-          currentField += char;
+        }
       }
+      i++;
+    }
+
+    // End of line
+    if (!inQuotedField) {
+      currentRow.push(currentField);
+      rows.push(currentRow);
+      currentRow = [];
+      currentField = '';
     }
   }
 
-  // Add the last field and row if the CSV doesn't end with a newline
-  if (currentField !== '' || currentRow.length > 0) {
-    currentRow.push(currentField);
-    rows.push(currentRow);
+  // If the last line was part of a quoted field
+  if (inQuotedField) {
+      currentField += '\n';
+  } else if (currentField !== '' || currentRow.length > 0) {
+      currentRow.push(currentField);
+      rows.push(currentRow);
   }
-
+  
   return rows.filter(row => row.length > 0 && (row.length > 1 || row[0] !== ''));
 };
 
