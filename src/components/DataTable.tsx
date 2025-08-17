@@ -127,7 +127,7 @@ export default function DataTable({ initialData }: DataTableProps) {
             </Button>
         </div>
         <div className="relative overflow-x-auto border rounded-lg">
-            <Table>
+            <Table className="table-auto">
             <TableHeader>
                 <TableRow className="bg-muted/50">
                 <TableHead className="w-12"></TableHead>
