@@ -35,12 +35,13 @@ const prompt = ai.definePrompt({
   name: 'extractTextFromImagePrompt',
   input: {schema: ExtractTextFromImageInputSchema},
   output: {schema: ExtractTextFromImageOutputSchema},
-  prompt: `You are an expert at extracting tabular data from images.
-  Extract the text from the following image and return it as a CSV-formatted string.
+  prompt: `You are an expert at extracting tabular data from images and PDFs.
+  Extract the text from the following document and return it as a CSV-formatted string.
   The first line of the CSV should be the header row.
 
   Pay close attention to numerical data and ensure it is extracted with the highest accuracy.
   If the rows in the image are prefixed with a serial number or index, create a separate column named "S.No." for these numbers. Do not include the numbers in the adjacent column.
+  Ensure that the output is a valid CSV format, properly quoting fields that contain commas or newlines.
 
 Image: {{media url=imageDataUri}}`,
 });
