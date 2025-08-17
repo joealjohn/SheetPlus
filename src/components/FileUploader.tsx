@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, type DragEvent, type ChangeEvent, useCallback } from 'react';
-import { UploadCloud, File, Image as ImageIcon, FileText, Camera, Loader2 } from 'lucide-react';
+import { useState, type DragEvent, type ChangeEvent, useCallback, useRef, useEffect } from 'react';
+import { UploadCloud, File, Image as ImageIcon, FileText, Camera, Loader2, Video, CameraIcon, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { extractTextFromImage } from '@/ai/flows/extract-text-from-image';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type FileUploaderProps = {
   onDataExtracted: (data: string[][], file: File) => void;
@@ -12,69 +14,14 @@ type FileUploaderProps = {
 };
 
 const parseCsv = (csv: string): string[][] => {
-  const lines = csv.split(/\r\n|\n|\r/);
-  const rows: string[][] = [];
-
-  let inQuotedField = false;
-  let currentField = '';
-  let currentRow: string[] = [];
-
-  for (const line of lines) {
-    if (line.trim() === '') continue;
-
-    let i = 0;
-    while (i < line.length) {
-      const char = line[i];
-
-      if (inQuotedField) {
-        if (char === '"') {
-          if (i + 1 < line.length && line[i + 1] === '"') {
-            currentField += '"';
-            i++;
-          } else {
-            inQuotedField = false;
-          }
-        } else {
-          currentField += char;
-        }
-      } else {
-        switch (char) {
-          case ',':
-            currentRow.push(currentField);
-            currentField = '';
-            break;
-          case '"':
-            if (currentField === '') {
-              inQuotedField = true;
-            } else {
-              currentField += char;
-            }
-            break;
-          default:
-            currentField += char;
-        }
+    const lines = csv.split('\n');
+    return lines.map(line => {
+      const sanitizedLine = line.trim();
+      if (sanitizedLine.endsWith('\r')) {
+        return sanitizedLine.slice(0, -1);
       }
-      i++;
-    }
-
-    // End of line
-    if (!inQuotedField) {
-      currentRow.push(currentField);
-      rows.push(currentRow);
-      currentRow = [];
-      currentField = '';
-    }
-  }
-
-  // If the last line was part of a quoted field
-  if (inQuotedField) {
-      currentField += '\n';
-  } else if (currentField !== '' || currentRow.length > 0) {
-      currentRow.push(currentField);
-      rows.push(currentRow);
-  }
-  
-  return rows.filter(row => row.length > 0 && (row.length > 1 || row[0] !== ''));
+      return sanitizedLine;
+    }).filter(line => line).map(line => line.split(','));
 };
 
 
@@ -82,6 +29,45 @@ export default function FileUploader({ onDataExtracted, onProcessing }: FileUplo
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
   const [isExtracting, setIsExtracting] = useState(false);
+  
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const requestCameraPermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setHasCameraPermission(true);
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      setHasCameraPermission(false);
+      toast({
+        variant: 'destructive',
+        title: 'Camera Access Denied',
+        description: 'Please enable camera permissions in your browser settings to use this feature.',
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isCameraOpen) {
+      requestCameraPermission();
+    } else {
+      // Stop camera stream when dialog is closed
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCameraOpen]);
+
 
   const handleFile = useCallback(async (file: File | null) => {
     if (!file) {
@@ -144,6 +130,26 @@ export default function FileUploader({ onDataExtracted, onProcessing }: FileUplo
     }
   }, [onDataExtracted, onProcessing, toast]);
 
+  const handleCapture = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      if(context){
+        context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+        canvas.toBlob((blob) => {
+            if (blob) {
+                const capturedFile = new File([blob], "capture.jpg", { type: "image/jpeg" });
+                handleFile(capturedFile);
+                setIsCameraOpen(false);
+            }
+        }, 'image/jpeg');
+      }
+    }
+  };
+
   const handleDragEnter = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -179,35 +185,71 @@ export default function FileUploader({ onDataExtracted, onProcessing }: FileUplo
   }
 
   return (
-    <div
-      className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 ${isDragging ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'} ${isExtracting ? 'pointer-events-none' : ''}`}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-    >
-      <input type="file" id="file-input" className="hidden" onChange={handleInputChange} accept="image/png, image/jpeg, application/pdf" disabled={isExtracting} />
-      {isExtracting ? (
-        <div className="flex flex-col items-center gap-4 text-primary">
-            <Loader2 className="w-12 h-12 animate-spin" />
-            <p className="font-semibold">Extracting data...</p>
-            <p className="text-muted-foreground">Please wait while we process your file.</p>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center gap-4">
-          <UploadCloud className={`w-12 h-12 transition-colors ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
-          <p className="font-semibold">Drag & drop your file here</p>
-          <p className="text-muted-foreground">or</p>
-          <Button onClick={triggerFileInput} disabled={isExtracting}>
-              <File className="mr-2 h-4 w-4" /> Browse Files
-          </Button>
-          <div className="flex gap-4 text-muted-foreground mt-4">
-              <div className="flex items-center gap-2 text-sm"><ImageIcon className="h-4 w-4" /> JPG, PNG</div>
-              <div className="flex items-center gap-2 text-sm"><FileText className="h-4 w-4" /> PDF</div>
-              <div className="flex items-center gap-2 text-sm"><Camera className="h-4 w-4" /> Camera (coming soon)</div>
+    <>
+      <div
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 ${isDragging ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'} ${isExtracting ? 'pointer-events-none' : ''}`}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        <input type="file" id="file-input" className="hidden" onChange={handleInputChange} accept="image/png, image/jpeg, application/pdf" disabled={isExtracting} />
+        {isExtracting ? (
+          <div className="flex flex-col items-center gap-4 text-primary">
+              <Loader2 className="w-12 h-12 animate-spin" />
+              <p className="font-semibold">Extracting data...</p>
+              <p className="text-muted-foreground">Please wait while we process your file.</p>
           </div>
-        </div>
-      )}
-    </div>
+        ) : (
+          <div className="flex flex-col items-center gap-4">
+            <UploadCloud className={`w-12 h-12 transition-colors ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
+            <p className="font-semibold">Drag & drop your file here</p>
+            <p className="text-muted-foreground">or</p>
+            <div className="flex gap-2">
+              <Button onClick={triggerFileInput} disabled={isExtracting}>
+                  <File className="mr-2 h-4 w-4" /> Browse Files
+              </Button>
+               <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="outline">
+                        <Camera className="mr-2 h-4 w-4" /> Use Camera
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle>Camera</DialogTitle>
+                    </DialogHeader>
+                    {hasCameraPermission === false && (
+                        <Alert variant="destructive">
+                            <AlertTitle>Camera Access Required</AlertTitle>
+                            <AlertDescription>
+                                Please allow camera access in your browser to use this feature.
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    {hasCameraPermission && (
+                        <div>
+                            <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted playsInline />
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsCameraOpen(false)}>Cancel</Button>
+                        <Button onClick={handleCapture} disabled={!hasCameraPermission}>
+                            <Zap className="mr-2 h-4 w-4" /> Capture
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+               </Dialog>
+            </div>
+            <div className="flex gap-4 text-muted-foreground mt-4">
+                <div className="flex items-center gap-2 text-sm"><ImageIcon className="h-4 w-4" /> JPG, PNG</div>
+                <div className="flex items-center gap-2 text-sm"><FileText className="h-4 w-4" /> PDF</div>
+                <div className="flex items-center gap-2 text-sm"><Video className="h-4 w-4" /> Camera</div>
+            </div>
+          </div>
+        )}
+      </div>
+      <canvas ref={canvasRef} className="hidden"></canvas>
+    </>
   );
 }
