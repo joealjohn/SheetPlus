@@ -18,16 +18,23 @@ const EnhanceDataInterpretationInputSchema = z.object({
 });
 export type EnhanceDataInterpretationInput = z.infer<typeof EnhanceDataInterpretationInputSchema>;
 
+const ColumnInterpretationSchema = z.object({
+    columnName: z.string().describe('The name of the column.'),
+    dataType: z
+      .string()
+      .describe('The detected data type of the column (e.g., number, date, text).'),
+    suggestedFormat: z
+      .string()
+      .describe(
+        'A suggested format for the column based on the detected data type.'
+      ),
+  });
+  
 const EnhanceDataInterpretationOutputSchema = z.object({
-  columnInterpretations: z.record(
-    z.object({
-      dataType: z.string().describe('The detected data type of the column (e.g., number, date, text).'),
-      suggestedFormat: z
-        .string()
-        .describe('A suggested format for the column based on the detected data type.'),
-    })
-  ),
-});
+    columnInterpretations: z
+      .array(ColumnInterpretationSchema)
+      .describe('An array of interpretations for each column.'),
+  });
 export type EnhanceDataInterpretationOutput = z.infer<typeof EnhanceDataInterpretationOutputSchema>;
 
 export async function enhanceDataInterpretation(input: EnhanceDataInterpretationInput): Promise<EnhanceDataInterpretationOutput> {
@@ -45,22 +52,27 @@ const enhanceDataInterpretationPrompt = ai.definePrompt({
 
   For each column, determine the most appropriate data type (e.g., number, date, text, boolean) and suggest a suitable formatting string.
 
-  Return a JSON object where each key is the column name and the value is an object containing the "dataType" and "suggestedFormat" for that column.
+  Return a JSON object with a "columnInterpretations" key, which is an array of objects. Each object should contain the "columnName", "dataType", and "suggestedFormat" for that column.
 
   Example:
   {
-    "column1": {
-      "dataType": "number",
-      "suggestedFormat": "#,##0.00"
-    },
-    "column2": {
-      "dataType": "date",
-      "suggestedFormat": "yyyy-MM-dd"
-    },
-    "column3": {
-      "dataType": "text",
-      "suggestedFormat": "@"
-    }
+    "columnInterpretations": [
+      {
+        "columnName": "column1",
+        "dataType": "number",
+        "suggestedFormat": "#,##0.00"
+      },
+      {
+        "columnName": "column2",
+        "dataType": "date",
+        "suggestedFormat": "yyyy-MM-dd"
+      },
+      {
+        "columnName": "column3",
+        "dataType": "text",
+        "suggestedFormat": "@"
+      }
+    ]
   }
   Ensure the JSON is parsable.
   `,
