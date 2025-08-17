@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import SheetLogo from './icons/SheetLogo';
+import { ModeToggle } from './mode-toggle';
 
 export default function Header() {
   return (
@@ -11,6 +12,7 @@ export default function Header() {
             Sheets+
           </span>
         </Link>
+        <ModeToggle />
       </div>
     </header>
   );
