@@ -1,0 +1,6 @@
+{
+  "firebase_hosting": {
+    "deploymentHostingUrl": "https://lively-sentry-416814.web.app"
+  },
+  "cloud_run_deploy": {}
+}
