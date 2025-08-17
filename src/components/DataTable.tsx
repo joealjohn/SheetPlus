@@ -127,17 +127,17 @@ export default function DataTable({ initialData }: DataTableProps) {
             </Button>
         </div>
         <div className="relative overflow-x-auto border rounded-lg">
-            <Table className="table-auto">
+            <Table>
             <TableHeader>
                 <TableRow className="bg-muted/50">
                 <TableHead className="w-12"></TableHead>
                 {headers.map((_, colIndex) => (
-                    <TableHead key={colIndex} className="relative group">
+                    <TableHead key={colIndex} className="relative group p-2">
                         <Input
                             type="text"
                             value={data[0][colIndex]}
                             onChange={(e) => handleCellChange(e, 0, colIndex)}
-                            className="font-bold border-0 bg-transparent"
+                            className="font-bold border-0 bg-transparent min-w-40"
                         />
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -161,7 +161,7 @@ export default function DataTable({ initialData }: DataTableProps) {
             <TableBody>
                 {bodyRows.map((row, rowIndex) => (
                 <TableRow key={rowIndex} className="group">
-                    <TableCell className="relative">
+                    <TableCell className="relative p-2">
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button
@@ -179,12 +179,12 @@ export default function DataTable({ initialData }: DataTableProps) {
                     </Tooltip>
                     </TableCell>
                     {row.map((cell, colIndex) => (
-                    <TableCell key={colIndex}>
+                    <TableCell key={colIndex} className="p-2">
                         <Input
                         type="text"
                         value={cell}
                         onChange={(e) => handleCellChange(e, rowIndex + 1, colIndex)}
-                        className="w-full"
+                        className="w-full min-w-40"
                         />
                     </TableCell>
                     ))}
