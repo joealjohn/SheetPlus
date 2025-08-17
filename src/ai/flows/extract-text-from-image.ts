@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {autoCorrectOcr} from './auto-correct-ocr';
 
 const ExtractTextFromImageInputSchema = z.object({
   imageDataUri: z
@@ -48,6 +49,10 @@ const extractTextFromImageFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('Failed to extract text from image.');
+    }
+    const { correctedText } = await autoCorrectOcr({ ocrText: output.extractedText });
+    return { extractedText: correctedText };
   }
 );
