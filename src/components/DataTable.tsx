@@ -4,7 +4,7 @@ import { useState, useEffect, type ChangeEvent } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Trash2, Download, X } from 'lucide-react';
+import { PlusCircle, Trash2, Download, X, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Tooltip,
@@ -12,6 +12,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Packer, Document, Table as DocxTable, TableRow as DocxTableRow, TableCell as DocxTableCell, Paragraph, TextRun, WidthType } from 'docx';
+import { saveAs } from 'file-saver';
 
 
 type DataTableProps = {
@@ -95,6 +97,55 @@ export default function DataTable({ initialData }: DataTableProps) {
       });
   };
 
+  const exportToWord = () => {
+    if (data.length === 0) {
+        toast({
+            title: "Export Failed",
+            description: "There is no data to export.",
+            variant: "destructive",
+        });
+        return;
+    }
+
+    const table = new DocxTable({
+        width: {
+            size: 100,
+            type: WidthType.PERCENTAGE,
+        },
+        rows: data.map((rowData, rowIndex) => {
+            return new DocxTableRow({
+                children: rowData.map((cellData) => {
+                    return new DocxTableCell({
+                        children: [new Paragraph({
+                            children: [
+                                new TextRun({
+                                    text: cellData,
+                                    bold: rowIndex === 0,
+                                })
+                            ]
+                        })],
+                    });
+                }),
+            });
+        }),
+    });
+
+    const doc = new Document({
+        sections: [{
+            children: [table],
+        }],
+    });
+
+    Packer.toBlob(doc).then(blob => {
+        saveAs(blob, "exported_data.docx");
+        toast({
+            title: "Export Successful",
+            description: "Your data has been exported as a Word document.",
+            variant: 'default',
+        });
+    });
+  };
+
   if (data.length === 0) {
     return (
         <div className="text-center py-10">
@@ -122,9 +173,14 @@ export default function DataTable({ initialData }: DataTableProps) {
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Column
                 </Button>
             </div>
-            <Button onClick={exportToCSV} variant="default" size="sm">
-                <Download className="mr-2 h-4 w-4" /> Export CSV
-            </Button>
+            <div className="flex gap-2">
+                <Button onClick={exportToWord} variant="default" size="sm">
+                    <FileText className="mr-2 h-4 w-4" /> Export Word
+                </Button>
+                <Button onClick={exportToCSV} variant="default" size="sm">
+                    <Download className="mr-2 h-4 w-4" /> Export CSV
+                </Button>
+            </div>
         </div>
         <div className="relative overflow-x-auto border rounded-lg">
             <Table>
