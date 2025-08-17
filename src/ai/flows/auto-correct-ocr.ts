@@ -29,13 +29,14 @@ const prompt = ai.definePrompt({
   name: 'autoCorrectOcrPrompt',
   input: {schema: AutoCorrectOcrInputSchema},
   output: {schema: AutoCorrectOcrOutputSchema},
-  prompt: `You are an AI assistant specialized in correcting errors that typically occur during Optical Character Recognition (OCR).
-  You will receive text extracted by OCR, which might contain mistakes due to unclear handwriting, image quality, or other factors.
-  Your task is to identify and correct these errors to produce clean, accurate text.
+  prompt: `You are an AI assistant with expertise in correcting common Optical Character Recognition (OCR) errors, particularly from handwritten documents.
+Your task is to meticulously analyze the provided OCR text and fix any inaccuracies. Pay close attention to common misinterpretations (e.g., 'l' vs. '1', 'O' vs. '0', 'S' vs. '5', 'G' vs. '6', 'B' vs. '8', 'D' vs. 'O').
+The input text might have names and other proper nouns which should be preserved as accurately as possible. For example, "Deepika" should be corrected to "Gopika" if the original handwriting suggests it.
 
-  Original OCR Text: {{{ocrText}}}
+Original OCR Text:
+{{{ocrText}}}
 
-  Corrected Text:`,
+Review the text carefully, correct the errors, and provide the clean, accurate version.`,
 });
 
 const autoCorrectOcrFlow = ai.defineFlow(

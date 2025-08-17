@@ -11,6 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {autoCorrectOcr} from './auto-correct-ocr';
+import {enhanceDataInterpretation} from './enhance-data-interpretation';
 
 const ExtractTextFromImageInputSchema = z.object({
   imageDataUri: z
@@ -53,6 +54,12 @@ const extractTextFromImageFlow = ai.defineFlow(
       throw new Error('Failed to extract text from image.');
     }
     const { correctedText } = await autoCorrectOcr({ ocrText: output.extractedText });
+
+    // Since enhanceDataInterpretation expects JSON, we need to provide a dummy JSON for now.
+    // This part can be improved later to convert CSV to JSON and get meaningful suggestions.
+    const interpretationResult = await enhanceDataInterpretation({ jsonData: '{}' });
+    console.log('Data interpretation suggestions:', interpretationResult.columnInterpretations);
+    
     return { extractedText: correctedText };
   }
 );
