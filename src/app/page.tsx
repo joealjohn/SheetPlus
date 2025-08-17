@@ -50,7 +50,7 @@ export default function Home() {
               <CardHeader>
                 <CardTitle className="text-2xl font-headline">The most powerful AI to extract data from images to sheets</CardTitle>
                 <CardDescription>
-                  Extract data from your images with up to 90% accuracy, even from handwritten notes. No sign-up required, enjoy free and unlimited usage. Upload an image (JPG, PNG) or a PDF to start.
+                  Extract data from your images with up to 95% accuracy, even from handwritten notes. No sign-up required, enjoy free and unlimited usage. Upload an image (JPG, PNG) or a PDF to start.
                 </CardDescription>
               </CardHeader>
               <CardContent>
