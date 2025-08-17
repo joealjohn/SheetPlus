@@ -14,14 +14,16 @@ type FileUploaderProps = {
 };
 
 const parseCsv = (csv: string): string[][] => {
-    const lines = csv.split('\n');
-    return lines.map(line => {
-      const sanitizedLine = line.trim();
-      if (sanitizedLine.endsWith('\r')) {
-        return sanitizedLine.slice(0, -1);
-      }
-      return sanitizedLine;
-    }).filter(line => line).map(line => line.split(','));
+    const lines = csv.trim().split('\n');
+    return lines.map(line => 
+        line.split(',').map(cell => {
+            let newCell = cell.trim();
+            if (newCell.startsWith('"') && newCell.endsWith('"')) {
+                newCell = newCell.substring(1, newCell.length - 1);
+            }
+            return newCell;
+        })
+    );
 };
 
 
